@@ -1,0 +1,110 @@
+Server Side
+https://docs.gluster.org/en/main/Quick-Start-Guide/Quickstart/#step-4-configure-the-firewall
+
+https://docs.gluster.org/en/main/Quick-Start-Guide/Quickstart/#step-7-testing-the-glusterfs-volume
+
+
+
+1. Create two server or 3 servers
+2. Install glusterfs-server package
+3. Add host entries
+4. Install gluster-fuse client package & add host entries
+5. Peer node : gluster peer probe server2  # From node1
+        
+        yum install glusterfs-server
+        service glusterd start
+        service glusterd status
+        gluster peer probe server2
+        gluster peer probe server3
+
+
+        it is advised to probe back the server1 from server2, 
+        server3 or upto nth server based on the cluster size
+        From server2 
+        gluster peer probe server1
+
+6. gluster peer status
+7. Create directory on both nodes
+    mkdir /gluster
+8. Gluster Volume List 
+9. Create volume 
+    gluster volume create volume1 replica 2 gluster1:/gluster/brick1 gluster2:/gluster:brick1  force  # if using root disk 
+10. gluster volume info   # check type (replica, bricks create in both nodes )
+11. gluster volume start 
+12. gluster volume status # check brick port - 49152 , # Check Status it should show started 
+13. netstat -nltp 
+14. Verify the same volume command from gluster server 2  ## It will show same output  
+15. Now mount the volume on client side
+        mkdir /mnt/volume1 
+        mount -t glusterfs gluster1:volume1  /mnt/volume1   
+        mount |grep -i volume1 
+        cd /mnt/volume1 
+        touch test 
+16. To unmount and delete volume from gluster
+        umount /mnt/volume1
+        rm -rf /mnt/volume1
+17. Goto gluster server to check status of volume1 
+        gluster volume list 
+        gluster volume status
+        gluster volume stop volume1
+        gluster volume info
+        gluster volume delete volume1 
+        ls /gluster/brick1    ## Still data will be there 
+        rm -rf /gluster/brick1   # on server node1
+        rm -rf /gluster/brick2   # on server node2 
+
+18. Create Distributed Volume # By default it is distributed 
+    gluster volume create volume2 gluster1:/gluster/brick1 gluster2:/gluster:brick1  force 
+    gluster volume status 
+    gluster volume start volume2 
+    mount -t glusterfs gluster1:volume2 /mnt/volume2 
+
+19. Commands for Gluster help
+    gluster pool list   # List of nodes 
+    gluster peer deattach gluster2   # to remove node 
+    gluster volume help 
+    gluster volume sync gluster2 volume1 
+    gluster volume quota 
+
+20. Gluster volume Quota
+    gluster volume quota volume1 list 
+    gluster volume quota volume1 enable
+    gluster volume quota volume1 limit-usage / 20MB 
+    gluster volume quota  volume1 list 
+    df -hP    # on client side to check size 
+    gluster volume quota volume1 disable
+
+21. Extend & Shrink Gluster volume
+    gluster volume add-brick volume1 gluster2:/gluster/brick1 force 
+    gluster volume info 
+    gluster volume rebalance volume1 start  
+    on node we can run - gluster volume rebalance volume1 status
+
+    # Remove Brick 
+     gluster volume  remove-brick volume1 gluster2:/gluster/brick1 start  
+     gluster volume  remove-brick volume1 gluster2:/gluster/brick1 commit 
+     gluster volume info 
+
+22. Restricting Client Connections 
+    gluster volume get volume1 auth.allow
+    gluster volume get volume1 auth.restrict
+    gluster volume get volume1 auth.reject 
+    gluster volume get volume1 all | less 
+    gluster volume set volume1 auth.reject 192.168.1.1 or 192.168.*.* or gluster-client
+    gluster volume get volume1 auth.reject
+    gluster volume get volume1 all |grep -i auth.
+    gluster volume reset volume1 auth.reject 
+    
+    check log file : /var/log/gluster/gluster-brick1.log 
+
+
+
+
+
+
+
+
+
+
+
+
